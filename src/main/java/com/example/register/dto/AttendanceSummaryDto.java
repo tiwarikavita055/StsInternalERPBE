@@ -8,7 +8,7 @@ import lombok.Data;
 public class AttendanceSummaryDto {
     private Long userId;
     private String username;
-    private long totalPresent;
-    private long totalAbsent;
-    private long totalDays;
+    private long totalPresentDays;
+    private long totalAbsentDays;
+    private long totalHoursWorked;
 }

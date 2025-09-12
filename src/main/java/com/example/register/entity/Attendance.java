@@ -2,7 +2,9 @@ package com.example.register.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -20,6 +22,9 @@ public class Attendance {
 
     private LocalDate date;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;  // PRESENT / ABSENT
+    private LocalDateTime punchInTime;
+
+    private LocalDateTime punchOutTime;
+
+    private boolean active; // true = punched in, false = punched out
 }

@@ -1,15 +1,16 @@
 package com.example.register.service;
 
-import com.example.register.dto.AttendanceDto;
 import com.example.register.dto.AttendanceSummaryDto;
 import com.example.register.entity.Attendance;
 import com.example.register.entity.Register;
-import com.example.register.entity.Status;
 import com.example.register.repository.AttendanceRepository;
 import com.example.register.repository.RegisterRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,67 +26,61 @@ public class AttendanceService {
         this.registerRepository = registerRepository;
     }
 
-    public String markAttendance(AttendanceDto dto) {
-        Register user = registerRepository.findById(dto.getUserId())
+    // ✅ Punch In
+    public String punchIn(String email) {
+        Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (attendanceRepository.findActiveByUser(user).isPresent()) {
+            return "User already punched in!";
+        }
 
         Attendance attendance = new Attendance();
         attendance.setUser(user);
         attendance.setDate(LocalDate.now());
-        attendance.setStatus(Status.valueOf(dto.getStatus().toUpperCase()));
+        attendance.setPunchInTime(LocalDateTime.now());
+        attendance.setActive(true);
 
         attendanceRepository.save(attendance);
-        return "Attendance marked for " + user.getUsername();
+        return "Punch in recorded for " + user.getEmail();
     }
 
-    public AttendanceSummaryDto getAttendanceSummary(Long userId) {
-        Register user = registerRepository.findById(userId)
+    // ✅ Punch Out
+    public String punchOut(String email) {
+        Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Attendance> records = attendanceRepository.findByUser(user);
+        Attendance attendance = attendanceRepository.findActiveByUser(user)
+                .orElseThrow(() -> new RuntimeException("No active punch-in found"));
 
-        long totalPresent = records.stream().filter(a -> a.getStatus() == Status.PRESENT).count();
-        long totalAbsent = records.stream().filter(a -> a.getStatus() == Status.ABSENT).count();
+        attendance.setPunchOutTime(LocalDateTime.now());
+        attendance.setActive(false);
+        attendanceRepository.save(attendance);
 
-        return new AttendanceSummaryDto(
-                user.getId(),
-                user.getUsername(),
-                totalPresent,
-                totalAbsent,
-                records.size()
-        );
+        return "Punch out recorded for " + user.getEmail();
     }
 
-    public List<AttendanceSummaryDto> getAllAttendanceSummaries() {
-        List<Register> users = registerRepository.findAll();
-        List<AttendanceSummaryDto> summaries = new ArrayList<>();
-
-        for (Register user : users) {
-            List<Attendance> records = attendanceRepository.findByUser(user);
-
-            long totalPresent = records.stream().filter(a -> a.getStatus() == Status.PRESENT).count();
-            long totalAbsent = records.stream().filter(a -> a.getStatus() == Status.ABSENT).count();
-
-            AttendanceSummaryDto summary = new AttendanceSummaryDto(
-                    user.getId(),
-                    user.getUsername(),
-                    totalPresent,
-                    totalAbsent,
-                    records.size()
-            );
-
-            summaries.add(summary);
+    // ✅ Auto Punch-Out after 12 hrs
+    @Scheduled(fixedRate = 3600000) // every 1 hour
+    public void autoPunchOut() {
+        List<Attendance> activeRecords = attendanceRepository.findAllActive();
+        for (Attendance a : activeRecords) {
+            if (a.getPunchInTime().plusHours(12).isBefore(LocalDateTime.now())) {
+                a.setPunchOutTime(a.getPunchInTime().plusHours(12));
+                a.setActive(false);
+                attendanceRepository.save(a);
+            }
         }
-        return summaries;
     }
 
+    // ✅ Per-user summary
     public AttendanceSummaryDto getAttendanceSummary(Long userId, Integer month, Integer year) {
         Register user = registerRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Attendance> records = attendanceRepository.findByUser(user);
 
-        // ✅ Apply month/year filter if provided
+        // Filter by month/year if provided
         if (month != null && year != null) {
             YearMonth ym = YearMonth.of(year, month);
             records = records.stream()
@@ -94,48 +89,30 @@ public class AttendanceService {
                     .toList();
         }
 
-        long totalPresent = records.stream().filter(a -> a.getStatus() == Status.PRESENT).count();
-        long totalAbsent = records.stream().filter(a -> a.getStatus() == Status.ABSENT).count();
+        long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
+        long totalAbsent = records.size() - totalPresent;
+        long totalHoursWorked = records.stream()
+                .filter(r -> r.getPunchOutTime() != null)
+                .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
+                .sum();
 
         return new AttendanceSummaryDto(
                 user.getId(),
-                user.getUsername(),
+                user.getEmail(),   // showing email instead of username
                 totalPresent,
                 totalAbsent,
-                records.size()
+                totalHoursWorked
         );
     }
 
+    // ✅ All users summary
     public List<AttendanceSummaryDto> getAllAttendanceSummaries(Integer month, Integer year) {
         List<Register> users = registerRepository.findAll();
         List<AttendanceSummaryDto> summaries = new ArrayList<>();
 
         for (Register user : users) {
-            List<Attendance> records = attendanceRepository.findByUser(user);
-
-            if (month != null && year != null) {
-                YearMonth ym = YearMonth.of(year, month);
-                records = records.stream()
-                        .filter(a -> a.getDate().getYear() == ym.getYear()
-                                && a.getDate().getMonthValue() == ym.getMonthValue())
-                        .toList();
-            }
-
-            long totalPresent = records.stream().filter(a -> a.getStatus() == Status.PRESENT).count();
-            long totalAbsent = records.stream().filter(a -> a.getStatus() == Status.ABSENT).count();
-
-            AttendanceSummaryDto summary = new AttendanceSummaryDto(
-                    user.getId(),
-                    user.getUsername(),
-                    totalPresent,
-                    totalAbsent,
-                    records.size()
-            );
-
-            summaries.add(summary);
+            summaries.add(getAttendanceSummary(user.getId(), month, year));
         }
         return summaries;
     }
-
-
 }
