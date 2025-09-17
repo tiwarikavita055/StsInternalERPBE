@@ -1,6 +1,7 @@
 package com.example.register.controller;
 
 import com.example.register.dto.AttendanceSummaryDto;
+import com.example.register.dto.AttendanceTableDto;
 import com.example.register.dto.PunchDto;
 import com.example.register.entity.Attendance;
 import com.example.register.service.AttendanceService;
@@ -50,17 +51,34 @@ public String punchIn() {
         String username = auth.getName(); // comes from JWT subject
         return attendanceService.punchOut(username);
     }
+    // ✅ Detailed attendance table for logged-in user
+    @GetMapping("/table/me")
+    public List<AttendanceTableDto> getMyAttendanceTable(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        return attendanceService.getMyAttendanceTable(username, month, year);
+    }
+
 
 
 
     // ✅ Per-user summary
-    @GetMapping("/summary/{userId}")
-    public AttendanceSummaryDto getUserSummary(
-            @PathVariable Long userId,
+    // ✅ Per-user summary (uses JWT token instead of userId)
+    @GetMapping("/summary/me")
+    public AttendanceSummaryDto getMySummary(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
-        return attendanceService.getAttendanceSummary(userId, month, year);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName(); // comes from JWT
+
+        return attendanceService.getMyAttendanceSummary(username, month, year);
     }
+
 
     // ✅ All users summary
     @GetMapping("/summary")

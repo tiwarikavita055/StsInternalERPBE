@@ -1,6 +1,7 @@
 package com.example.register.service;
 
 import com.example.register.dto.AttendanceSummaryDto;
+import com.example.register.dto.AttendanceTableDto;
 import com.example.register.entity.Attendance;
 import com.example.register.entity.Register;
 import com.example.register.repository.AttendanceRepository;
@@ -113,6 +114,55 @@ public class AttendanceService {
                 totalHoursWorked
         );
     }
+    public List<AttendanceTableDto> getMyAttendanceTable(String username, Integer month, Integer year) {
+        Register user = registerRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Attendance> records = attendanceRepository.findByUser(user);
+
+        if (month != null && year != null) {
+            YearMonth ym = YearMonth.of(year, month);
+            records = records.stream()
+                    .filter(a -> a.getDate().getYear() == ym.getYear()
+                            && a.getDate().getMonthValue() == ym.getMonthValue())
+                    .toList();
+        }
+
+        return records.stream().map(a -> new AttendanceTableDto(
+                a.getDate(),
+                a.getPunchInTime(),
+                a.getPunchOutTime(),
+                (a.getPunchInTime() != null && a.getPunchOutTime() != null)
+                        ? Duration.between(a.getPunchInTime(), a.getPunchOutTime()).toHours()
+                        : 0,
+                a.isActive()
+        )).toList();
+    }
+
+    public AttendanceSummaryDto getMyAttendanceSummary(String username, Integer month, Integer year) {
+        Register user = registerRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Attendance> records = attendanceRepository.findByUser(user);
+
+        if (month != null && year != null) {
+            YearMonth ym = YearMonth.of(year, month);
+            records = records.stream()
+                    .filter(a -> a.getDate().getYear() == ym.getYear()
+                            && a.getDate().getMonthValue() == ym.getMonthValue())
+                    .toList();
+        }
+
+        long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
+        long totalAbsent = records.size() - totalPresent;
+        long totalHoursWorked = records.stream()
+                .filter(r -> r.getPunchOutTime() != null)
+                .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
+                .sum();
+
+        return new AttendanceSummaryDto(user.getId(), user.getUsername(), totalPresent, totalAbsent, totalHoursWorked);
+    }
+
 
     // ✅ All users summary
     public List<AttendanceSummaryDto> getAllAttendanceSummaries(Integer month, Integer year) {
