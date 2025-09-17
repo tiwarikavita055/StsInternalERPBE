@@ -35,6 +35,10 @@ public class AttendanceService {
         if (attendanceRepository.findActiveByUser(user).isPresent()) {
             return "User already punched in!";
         }
+        // 🚫 Prevent multiple punch-ins on the same date
+        if (attendanceRepository.findByUserAndDate(user, LocalDate.now()).isPresent()) {
+            return "You have already logged in today!";
+        }
 
         Attendance attendance = new Attendance();
         attendance.setUser(user);
