@@ -43,4 +43,28 @@ public class UserDocumentService {
         documentRepository.save(doc);
         return "Documents uploaded successfully!";
     }
+    public String editDocuments(Long userId,
+                                MultipartFile tenth,
+                                MultipartFile twelfth,
+                                MultipartFile aadhaar,
+                                MultipartFile pan,
+                                MultipartFile resume,
+                                MultipartFile photo) throws IOException {
+
+        UserDocument doc = documentRepository.findByUserId(userId);
+        if (doc == null) {
+            throw new RuntimeException("No documents found for user with ID: " + userId);
+        }
+
+        if (tenth != null) doc.setTenthMarksheet(tenth.getBytes());
+        if (twelfth != null) doc.setTwelfthMarksheet(twelfth.getBytes());
+        if (aadhaar != null) doc.setAadhaar(aadhaar.getBytes());
+        if (pan != null) doc.setPan(pan.getBytes());
+        if (resume != null) doc.setResume(resume.getBytes());
+        if (photo != null) doc.setPhoto(photo.getBytes());
+
+        documentRepository.save(doc);
+        return "Documents updated successfully!";
+    }
+
 }

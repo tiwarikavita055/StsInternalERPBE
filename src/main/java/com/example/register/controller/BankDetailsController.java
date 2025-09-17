@@ -18,4 +18,9 @@ public class BankDetailsController {
     public String addBankDetails(@PathVariable Long userId, @RequestBody BankDetails bankDetails) {
         return bankDetailsService.addBankDetails(userId, bankDetails);
     }
+    // 🔹 Update existing bank details
+    @PutMapping("/edit/{userId}")
+    public String editBankDetails(@PathVariable Long userId, @RequestBody BankDetails bankDetails) {
+        return bankDetailsService.editBankDetails(userId, bankDetails);
+    }
 }

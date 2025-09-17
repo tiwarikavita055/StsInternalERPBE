@@ -27,7 +27,7 @@ public class UserProfileService {
     public UserFullProfileDTO getUserFullProfile(Long userId) {
         Register user = registerRepository.findById(userId).orElse(null);
         UserDocument documents = documentRepository.findByUserId(userId);
-        BankDetails bankDetails = bankDetailsRepository.findByUserId(userId);
+        BankDetails bankDetails = bankDetailsRepository.findByUserId(userId).orElse(null);
 
         UserFullProfileDTO dto = new UserFullProfileDTO();
         dto.setUser(user);
