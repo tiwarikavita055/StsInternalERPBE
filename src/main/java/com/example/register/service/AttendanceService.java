@@ -92,6 +92,7 @@ public class AttendanceService {
         Register user = registerRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+
         List<Attendance> records = attendanceRepository.findByUser(user);
 
         // Filter by month/year if provided
@@ -119,7 +120,7 @@ public class AttendanceService {
         );
     }
     public List<AttendanceTableDto> getMyAttendanceTable(String username, Integer month, Integer year) {
-        Register user = registerRepository.findByUsername(username)
+        Register user = registerRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Attendance> records = attendanceRepository.findByUser(user);
@@ -144,7 +145,7 @@ public class AttendanceService {
     }
 
     public AttendanceSummaryDto getMyAttendanceSummary(String username, Integer month, Integer year) {
-        Register user = registerRepository.findByUsername(username)
+        Register user = registerRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Attendance> records = attendanceRepository.findByUser(user);

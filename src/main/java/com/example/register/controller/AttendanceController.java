@@ -40,16 +40,16 @@ public class AttendanceController {
 @PostMapping("/punch-in")
 public String punchIn() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String username = auth.getName(); // comes from JWT subject (email/username)
-    return attendanceService.punchIn(username);
+    String email = auth.getName(); // comes from JWT subject (email)
+    return attendanceService.punchIn(email);
 }
 
     // ✅ Punch Out
     @PostMapping("/punch-out")
     public String punchOut() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName(); // comes from JWT subject
-        return attendanceService.punchOut(username);
+        String email = auth.getName(); // comes from JWT subject (email)
+        return attendanceService.punchOut(email);
     }
     // ✅ Detailed attendance table for logged-in user
     @GetMapping("/table/me")
@@ -58,9 +58,9 @@ public String punchIn() {
             @RequestParam(required = false) Integer year) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
+        String email = auth.getName(); // comes from JWT subject (email)
 
-        return attendanceService.getMyAttendanceTable(username, month, year);
+        return attendanceService.getMyAttendanceTable(email, month, year);
     }
 
 
@@ -74,9 +74,8 @@ public String punchIn() {
             @RequestParam(required = false) Integer year) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName(); // comes from JWT
-
-        return attendanceService.getMyAttendanceSummary(username, month, year);
+        String email = auth.getName(); // comes from JWT subject (email)
+        return attendanceService.getMyAttendanceSummary(email, month, year);
     }
 
 
@@ -90,7 +89,8 @@ public String punchIn() {
     @GetMapping("/today")
     public Attendance getTodayAttendance() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName(); // from JWT
+        String email = auth.getName(); // comes from JWT subject (email)
+
         return attendanceService.getTodayAttendance(email);
     }
 
