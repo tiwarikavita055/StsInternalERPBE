@@ -73,6 +73,15 @@ public class AttendanceService {
         }
     }
 
+    public Attendance getTodayAttendance(String email) {
+        Register user = registerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return attendanceRepository.findByUserAndDate(user, LocalDate.now())
+                .orElse(null);
+    }
+
+
     // ✅ Per-user summary
     public AttendanceSummaryDto getAttendanceSummary(Long userId, Integer month, Integer year) {
         Register user = registerRepository.findById(userId)

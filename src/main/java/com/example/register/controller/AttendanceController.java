@@ -2,6 +2,7 @@ package com.example.register.controller;
 
 import com.example.register.dto.AttendanceSummaryDto;
 import com.example.register.dto.PunchDto;
+import com.example.register.entity.Attendance;
 import com.example.register.service.AttendanceService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -68,4 +69,12 @@ public String punchIn() {
             @RequestParam(required = false) Integer year) {
         return attendanceService.getAllAttendanceSummaries(month, year);
     }
+    @GetMapping("/today")
+    public Attendance getTodayAttendance() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName(); // from JWT
+        return attendanceService.getTodayAttendance(email);
+    }
+
+
 }
