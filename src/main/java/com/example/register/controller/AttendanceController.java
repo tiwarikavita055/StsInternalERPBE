@@ -6,6 +6,7 @@ import com.example.register.dto.PunchDto;
 import com.example.register.entity.Attendance;
 import com.example.register.service.AttendanceService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -79,13 +80,16 @@ public String punchIn() {
     }
 
 
-    // ✅ All users summary
+
+
     @GetMapping("/summary")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     public List<AttendanceSummaryDto> getAllSummaries(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
         return attendanceService.getAllAttendanceSummaries(month, year);
     }
+
     @GetMapping("/today")
     public Attendance getTodayAttendance() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

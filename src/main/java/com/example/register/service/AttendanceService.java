@@ -113,6 +113,7 @@ public class AttendanceService {
 
         return new AttendanceSummaryDto(
                 user.getId(),
+                user.getUsername(),
                 user.getEmail(),   // showing email instead of username
                 totalPresent,
                 totalAbsent,
@@ -165,7 +166,7 @@ public class AttendanceService {
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
                 .sum();
 
-        return new AttendanceSummaryDto(user.getId(), user.getUsername(), totalPresent, totalAbsent, totalHoursWorked);
+        return new AttendanceSummaryDto(user.getId(), user.getUsername(),user.getEmail(), totalPresent, totalAbsent, totalHoursWorked);
     }
 
 

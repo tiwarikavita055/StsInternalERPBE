@@ -7,7 +7,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class AttendanceSummaryDto {
     private Long userId;
-    private String username;
+    private String name;      // instead of username
+    private String email;     // new field
     private long totalPresentDays;
     private long totalAbsentDays;
     private long totalHoursWorked;
