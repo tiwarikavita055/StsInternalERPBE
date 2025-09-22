@@ -66,7 +66,7 @@ public class AttendanceService {
     }
 
     // ✅ Auto Punch-Out after 12 hrs
-    @Scheduled(fixedRate = 3600000) // every 1 hour
+    @Scheduled(fixedRate = 60000) // every 1 min
     public void autoPunchOut() {
         List<Attendance> activeRecords = attendanceRepository.findAllActive();
         for (Attendance a : activeRecords) {

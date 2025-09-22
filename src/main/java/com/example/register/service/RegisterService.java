@@ -49,15 +49,11 @@ public class RegisterService {
 
         return response;
     }
-    // 🔹 Update User
-    public RegisterResponseDto updateUser(Long userId, RegisterResponseDto dto) {
-        Optional<Register> userOpt = registerRepository.findById(userId);
+    // ✅ Update User by Email
+    public RegisterResponseDto updateUserByEmail(String email, RegisterResponseDto dto) {
+        Register user = registerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("User not found with ID: " + userId);
-        }
-
-        Register user = userOpt.get();
         user.setUsername(dto.getUsername());
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setEmail(dto.getEmail());
@@ -65,7 +61,6 @@ public class RegisterService {
         user.setRole(Role.USER);
 
         Register updated = registerRepository.save(user);
-
         return mapToResponseDto(updated);
     }
 
@@ -80,25 +75,21 @@ public class RegisterService {
         dto.setRole(user.getRole());
         return dto;
     }
-    // In RegisterService
-    public String changePassword(Long userId, ChangePasswordDto dto) {
-        Register user = registerRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+    // ✅ Change Password by Email
+    public String changePasswordByEmail(String email, ChangePasswordDto dto) {
+        Register user = registerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
-        // ✅ Check old password
         if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
             throw new RuntimeException("Old password is incorrect!");
         }
 
-        // ✅ Check confirmPassword
         if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             throw new RuntimeException("New password and confirm password do not match!");
         }
 
-        // ✅ Encode new password
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setConfirmPassword(passwordEncoder.encode(dto.getConfirmPassword()));
-
         registerRepository.save(user);
 
         return "Password updated successfully!";
