@@ -25,6 +25,7 @@ public class Attendance {
     private LocalDateTime punchInTime;
 
     private LocalDateTime punchOutTime;
+    private boolean absent = false;
 
     private boolean active; // true = punched in, false = punched out
 }

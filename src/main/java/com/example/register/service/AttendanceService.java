@@ -65,6 +65,29 @@ public class AttendanceService {
         return "Punch out recorded for " + user.getEmail();
     }
 
+    // ✅ Scheduled task to mark absent if no punch-in by 11:00 AM
+    @Scheduled(cron = "0 0 11 * * *") // runs every day at 11:00 AM
+    public void markAbsent() {
+        List<Register> users = registerRepository.findAll();
+        LocalDate today = LocalDate.now();
+
+        for (Register user : users) {
+            boolean hasPunchedIn = attendanceRepository.findByUserAndDate(user, today).isPresent();
+
+            if (!hasPunchedIn) {
+                // Create an attendance record with status "ABSENT"
+                Attendance absentRecord = new Attendance();
+                absentRecord.setUser(user);
+                absentRecord.setDate(today);
+                absentRecord.setPunchInTime(null);
+                absentRecord.setPunchOutTime(null);
+                absentRecord.setActive(false);
+                absentRecord.setAbsent(true); // you can add an 'absent' boolean field in Attendance entity
+
+                attendanceRepository.save(absentRecord);
+            }
+        }
+    }
     // ✅ Auto Punch-Out after 12 hrs
     @Scheduled(fixedRate = 60000) // every 1 min
     public void autoPunchOut() {
@@ -105,11 +128,14 @@ public class AttendanceService {
         }
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.size() - totalPresent;
+
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
                 .sum();
+        long totalAbsent = records.stream()
+                .filter(Attendance::isAbsent)
+                .count();
 
         return new AttendanceSummaryDto(
                 user.getId(),
@@ -160,7 +186,10 @@ public class AttendanceService {
         }
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.size() - totalPresent;
+        long totalAbsent = records.stream()
+                .filter(Attendance::isAbsent)
+                .count();
+
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())

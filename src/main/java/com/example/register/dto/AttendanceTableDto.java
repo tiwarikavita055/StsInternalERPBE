@@ -14,6 +14,7 @@ public class AttendanceTableDto {
     private LocalDate date;
     private LocalDateTime punchInTime;
     private LocalDateTime punchOutTime;
+
     private long workingHours;   // total hours worked that day
     private boolean active;      // true = punched in but not out yet
 }
