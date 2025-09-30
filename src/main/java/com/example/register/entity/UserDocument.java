@@ -18,6 +18,9 @@ public class UserDocument {
     @JsonIgnore
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private Register user;
+//    // 👇 derived field so Spring Data can use userId in queries
+//    @Column(name = "user_id", insertable = false, updatable = false)
+//    private Long userId;
 
     @Lob
     private byte[] tenthMarksheet;
