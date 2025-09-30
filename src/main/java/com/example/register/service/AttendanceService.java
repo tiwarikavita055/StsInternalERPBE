@@ -4,6 +4,7 @@ import com.example.register.dto.AttendanceSummaryDto;
 import com.example.register.dto.AttendanceTableDto;
 import com.example.register.entity.Attendance;
 import com.example.register.entity.Register;
+import com.example.register.entity.Status;
 import com.example.register.repository.AttendanceRepository;
 import com.example.register.repository.RegisterRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +26,19 @@ public class AttendanceService {
     public AttendanceService(AttendanceRepository attendanceRepository, RegisterRepository registerRepository) {
         this.attendanceRepository = attendanceRepository;
         this.registerRepository = registerRepository;
+    }
+
+    // ✅ Helper: filter by month & year
+    private List<Attendance> filterByMonthYear(List<Attendance> records, Integer month, Integer year) {
+        if (month != null && year != null) {
+            YearMonth ym = YearMonth.of(year, month);
+            return records.stream()
+                    .filter(a -> a.getDate() != null &&
+                            a.getDate().getYear() == ym.getYear() &&
+                            a.getDate().getMonthValue() == ym.getMonthValue())
+                    .toList();
+        }
+        return records;
     }
 
     // ✅ Punch In
@@ -60,6 +74,7 @@ public class AttendanceService {
 
         attendance.setPunchOutTime(LocalDateTime.now());
         attendance.setActive(false);
+        attendance.setStatus(Status.PRESENT);
         attendanceRepository.save(attendance);
 
         return "Punch out recorded for " + user.getEmail();
@@ -82,6 +97,7 @@ public class AttendanceService {
                 absentRecord.setPunchInTime(null);
                 absentRecord.setPunchOutTime(null);
                 absentRecord.setActive(false);
+                absentRecord.setStatus(Status.ABSENT);
                 absentRecord.setAbsent(true); // you can add an 'absent' boolean field in Attendance entity
 
                 attendanceRepository.save(absentRecord);
@@ -94,7 +110,7 @@ public class AttendanceService {
         List<Attendance> activeRecords = attendanceRepository.findAllActive();
         for (Attendance a : activeRecords) {
             if (a.getPunchInTime().plusHours(12).isBefore(LocalDateTime.now())) {
-                a.setPunchOutTime(a.getPunchInTime().plusHours(12));
+                a.setPunchOutTime(a.getPunchInTime().plusHours(8));
                 a.setActive(false);
                 attendanceRepository.save(a);
             }
@@ -115,50 +131,32 @@ public class AttendanceService {
         Register user = registerRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-
-        List<Attendance> records = attendanceRepository.findByUser(user);
-
-        // Filter by month/year if provided
-        if (month != null && year != null) {
-            YearMonth ym = YearMonth.of(year, month);
-            records = records.stream()
-                    .filter(a -> a.getDate().getYear() == ym.getYear()
-                            && a.getDate().getMonthValue() == ym.getMonthValue())
-                    .toList();
-        }
+        List<Attendance> records = filterByMonthYear(attendanceRepository.findByUser(user), month, year);
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-
+        long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
         long totalHoursWorked = records.stream()
-                .filter(r -> r.getPunchOutTime() != null)
+                .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
                 .sum();
-        long totalAbsent = records.stream()
-                .filter(Attendance::isAbsent)
-                .count();
+
 
         return new AttendanceSummaryDto(
                 user.getId(),
                 user.getUsername(),
-                user.getEmail(),   // showing email instead of username
+                user.getEmail(),
                 totalPresent,
                 totalAbsent,
                 totalHoursWorked
         );
     }
-    public List<AttendanceTableDto> getMyAttendanceTable(String username, Integer month, Integer year) {
-        Register user = registerRepository.findByEmail(username)
+
+    // ✅ Detailed table for logged-in user
+    public List<AttendanceTableDto> getMyAttendanceTable(String email, Integer month, Integer year) {
+        Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Attendance> records = attendanceRepository.findByUser(user);
-
-        if (month != null && year != null) {
-            YearMonth ym = YearMonth.of(year, month);
-            records = records.stream()
-                    .filter(a -> a.getDate().getYear() == ym.getYear()
-                            && a.getDate().getMonthValue() == ym.getMonthValue())
-                    .toList();
-        }
+        List<Attendance> records = filterByMonthYear(attendanceRepository.findByUser(user), month, year);
 
         return records.stream().map(a -> new AttendanceTableDto(
                 a.getDate(),
@@ -171,28 +169,28 @@ public class AttendanceService {
         )).toList();
     }
 
-    public AttendanceSummaryDto getMyAttendanceSummary(String username, Integer month, Integer year) {
-        Register user = registerRepository.findByEmail(username)
+    // ✅ Per-user summary (logged-in user)
+    public AttendanceSummaryDto getMyAttendanceSummary(String email, Integer month, Integer year) {
+        Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Attendance> records = attendanceRepository.findByUser(user);
-
-        if (month != null && year != null) {
-            YearMonth ym = YearMonth.of(year, month);
-            records = records.stream()
-                    .filter(a -> a.getDate().getYear() == ym.getYear()
-                            && a.getDate().getMonthValue() == ym.getMonthValue())
-                    .toList();
-        }
+        List<Attendance> records = filterByMonthYear(attendanceRepository.findByUser(user), month, year);
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.size() - totalPresent;
+        long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
         long totalHoursWorked = records.stream()
-                .filter(r -> r.getPunchOutTime() != null)
+                .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
                 .sum();
 
-        return new AttendanceSummaryDto(user.getId(), user.getUsername(),user.getEmail(), totalPresent, totalAbsent, totalHoursWorked);
+        return new AttendanceSummaryDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                totalPresent,
+                totalAbsent,
+                totalHoursWorked
+        );
     }
 
 
