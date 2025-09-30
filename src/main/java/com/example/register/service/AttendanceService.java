@@ -167,7 +167,7 @@ public class AttendanceService {
                 (a.getPunchInTime() != null && a.getPunchOutTime() != null)
                         ? Duration.between(a.getPunchInTime(), a.getPunchOutTime()).toHours()
                         : 0,
-                a.isActive()
+                a.getStatus()
         )).toList();
     }
 
@@ -186,10 +186,7 @@ public class AttendanceService {
         }
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.stream()
-                .filter(Attendance::isAbsent)
-                .count();
-
+        long totalAbsent = records.size() - totalPresent;
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())

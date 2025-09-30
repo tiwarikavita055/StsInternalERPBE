@@ -1,5 +1,6 @@
 package com.example.register.dto;
 
+import com.example.register.entity.Status;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,5 +17,5 @@ public class AttendanceTableDto {
     private LocalDateTime punchOutTime;
 
     private long workingHours;   // total hours worked that day
-    private boolean active;      // true = punched in but not out yet
+    private Status status;      // true = punched in but not out yet
 }

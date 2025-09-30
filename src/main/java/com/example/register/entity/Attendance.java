@@ -26,6 +26,7 @@ public class Attendance {
 
     private LocalDateTime punchOutTime;
     private boolean absent = false;
+    private Status status ;
 
     private boolean active; // true = punched in, false = punched out
 }
