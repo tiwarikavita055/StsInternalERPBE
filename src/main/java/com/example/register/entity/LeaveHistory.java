@@ -17,7 +17,7 @@ public class LeaveHistory {
 
 
     private Long employeeId;
-
+    private String username;
     private LocalDate startDate;
     private LocalDate endDate;
     private String leaveType;

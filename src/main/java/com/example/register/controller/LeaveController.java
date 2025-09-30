@@ -5,7 +5,9 @@ import com.example.register.dto.LeaveRequestsViewDto;
 import com.example.register.entity.LeaveBalance;
 import com.example.register.entity.LeaveHistory;
 import com.example.register.entity.LeaveRequest;
+import com.example.register.entity.Register;
 import com.example.register.repository.LeaveHistoryRepository;
+import com.example.register.repository.RegisterRepository;
 import com.example.register.service.LeaveBalanceService;
 import com.example.register.service.LeaveRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +30,8 @@ public class LeaveController {
 
     @Autowired
     private LeaveHistoryRepository leaveHistoryRepository;
-
+    @Autowired
+    private RegisterRepository registerRepository;
 
 
     // Approve a leave request
@@ -78,8 +81,19 @@ public class LeaveController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @GetMapping("/leave-history")
     public List<LeaveHistory> getLeaveHistory() {
-        return leaveHistoryRepository.findAll();
+        List<LeaveHistory> histories = leaveHistoryRepository.findAll();
+
+        // Set username for each leave history using employeeId
+        histories.forEach(history -> {
+            Register user = registerRepository.findById(history.getEmployeeId()).orElse(null);
+            if (user != null) {
+                history.setUsername(user.getUsername());
+            }
+        });
+
+        return histories;
     }
+
 
 
     // Apply for a leave
