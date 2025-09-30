@@ -4,9 +4,9 @@ import com.example.register.dto.LeaveRequestsViewDto;
 import com.example.register.entity.LeaveBalance;
 import com.example.register.entity.LeaveHistory;
 import com.example.register.entity.LeaveRequest;
-import com.example.register.repository.InternalEmployeeRepo;
 import com.example.register.repository.LeaveHistoryRepository;
 import com.example.register.repository.LeaveRequestRepository;
+import com.example.register.repository.RegisterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,7 @@ public class LeaveRequestService {
     private LeaveBalanceService leaveBalanceService;
 
     @Autowired
-    private InternalEmployeeRepo internalEmployeeRepo;
+    private RegisterRepository internalEmployeeRepo;
 
     public LeaveRequest applyLeave(LeaveRequest leaveRequest) {
         // Validate leave balance
@@ -78,7 +78,7 @@ public class LeaveRequestService {
        for(LeaveRequest r : als ) {
            LeaveRequestsViewDto s = new LeaveRequestsViewDto();
            s.setId(r.getId());
-           s.setEmpName(internalEmployeeRepo.findById(r.getEmployeeId()).get().getName());
+           s.setEmpName(internalEmployeeRepo.findById(r.getEmployeeId()).get().getUsername());
            s.setEmployeeId(r.getEmployeeId());
            s.setStatus(r.getStatus());
            s.setLeaveType(r.getLeaveType());

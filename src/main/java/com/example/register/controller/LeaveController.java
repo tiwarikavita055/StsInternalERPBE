@@ -32,28 +32,28 @@ public class LeaveController {
 
 
     // Approve a leave request
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @PostMapping("/approve-leave/{requestId}")
     public LeaveRequest approveLeave(@PathVariable Long requestId) {
         return leaveRequestService.approveLeave(requestId);
     }
 
     // Reject a leave request
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @PostMapping("/reject-leave/{requestId}")
     public LeaveRequest rejectLeave(@PathVariable Long requestId) {
         return leaveRequestService.rejectLeave(requestId);
     }
 
     // View all leave requests
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @GetMapping("/leave-requests")
     public List<LeaveRequestsViewDto> getAllLeaveRequests() {
         return leaveRequestService.getAllLeaveRequests().stream().filter(leaveRequest -> leaveRequest.getStatus().equals("PENDING")).toList();
     }
 
     // Add leave balance for an employee
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @PostMapping("/{employeeId}/add-leave-balance")
     public LeaveBalance addLeaveBalance(
             @PathVariable Long employeeId,
@@ -64,7 +64,7 @@ public class LeaveController {
     }
 
     // Deduct leave balance for an employee
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @PostMapping("/{employeeId}/deduct-leave-balance")
     public LeaveBalance deductLeaveBalance(
             @PathVariable Long employeeId,
@@ -75,7 +75,7 @@ public class LeaveController {
     }
 
     // View leave history for all employees
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @GetMapping("/leave-history")
     public List<LeaveHistory> getLeaveHistory() {
         return leaveHistoryRepository.findAll();

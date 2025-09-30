@@ -1,9 +1,10 @@
 package com.example.register.service;
 
-import com.example.register.entity.InternalEmployeees;
 import com.example.register.entity.LeaveBalance;
-import com.example.register.repository.InternalEmployeeRepo;
+import com.example.register.entity.Register;
+
 import com.example.register.repository.LeaveBalanceRepository;
+import com.example.register.repository.RegisterRepository;
 import com.example.register.util.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class LeaveBalanceService {
 
 
     @Autowired
-    private InternalEmployeeRepo employeeRepo;
+    private RegisterRepository employeeRepo;
 
     public void addDefaultLeave(Long employee) {
         List<LeaveBalance> balances = leaveBalanceRepository.findByEmployeeId(employee);
@@ -45,7 +46,7 @@ public class LeaveBalanceService {
     }
 
     public LeaveBalance getLeaveBalance(Long employee, String leaveType) {
-        InternalEmployeees eee = employeeRepo.findById(employee).orElseThrow(() ->   new ResourceNotFoundException("Resource with ID " + employee + " not found"));
+        Register eee = employeeRepo.findById(employee).orElseThrow(() ->   new ResourceNotFoundException("Resource with ID " + employee + " not found"));
         return leaveBalanceRepository.findByEmployeeIdAndLeaveType(employee, leaveType)
                 .orElseGet(() -> {
                     // Create and return an empty LeaveBalance object
