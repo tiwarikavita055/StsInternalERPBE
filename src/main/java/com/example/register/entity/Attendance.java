@@ -31,5 +31,6 @@ public class Attendance {
     @Enumerated(EnumType.STRING)
     private Status status ;
 
-    private boolean active; // true = punched in, false = punched out
+    private boolean active;
+    // true = punched in, false = punched out
 }

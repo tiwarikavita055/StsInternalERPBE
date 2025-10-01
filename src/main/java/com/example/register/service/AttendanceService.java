@@ -42,6 +42,7 @@ public class AttendanceService {
     }
 
     // ✅ Punch In
+    // ✅ Punch In
     public String punchIn(String email) {
         Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -49,6 +50,7 @@ public class AttendanceService {
         if (attendanceRepository.findActiveByUser(user).isPresent()) {
             return "User already punched in!";
         }
+
         // 🚫 Prevent multiple punch-ins on the same date
         if (attendanceRepository.findByUserAndDate(user, LocalDate.now()).isPresent()) {
             return "You have already logged in today!";
@@ -60,9 +62,21 @@ public class AttendanceService {
         attendance.setPunchInTime(LocalDateTime.now());
         attendance.setActive(true);
 
+        // ✅ Check time for Half-Day
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime cutoff = LocalDate.now().atTime(11, 0); // 11:00 AM cutoff
+
+        if (now.isAfter(cutoff)) {
+            attendance.setStatus(Status.HALFDAY);
+        } else {
+            attendance.setStatus(Status.PRESENT);
+        }
+
         attendanceRepository.save(attendance);
-        return "Punch in recorded for " + user.getEmail();
+        return "Punch in recorded for " + user.getEmail() +
+                (attendance.getStatus() == Status.HALFDAY ? " (Half Day)" : "");
     }
+
 
     // ✅ Punch Out
     public String punchOut(String email) {
@@ -81,7 +95,7 @@ public class AttendanceService {
     }
 
     // ✅ Scheduled task to mark absent if no punch-in by 11:00 AM
-    @Scheduled(cron = "0 0 11 * * *") // runs every day at 11:00 AM
+    @Scheduled(cron = "0 0 15 * * *") // runs every day at 3:00 PM
     public void markAbsent() {
         List<Register> users = registerRepository.findAll();
         LocalDate today = LocalDate.now();
