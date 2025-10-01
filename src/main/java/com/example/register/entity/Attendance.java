@@ -20,12 +20,15 @@ public class Attendance {
     @JoinColumn(name = "user_id", nullable = false)
     private Register user;
 
+
     private LocalDate date;
 
     private LocalDateTime punchInTime;
 
     private LocalDateTime punchOutTime;
     private boolean absent = false;
+
+    @Enumerated(EnumType.STRING)
     private Status status ;
 
     private boolean active; // true = punched in, false = punched out
