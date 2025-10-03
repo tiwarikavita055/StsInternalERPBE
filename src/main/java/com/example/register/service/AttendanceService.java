@@ -77,7 +77,6 @@ public class AttendanceService {
                 (attendance.getStatus() == Status.HALFDAY ? " (Half Day)" : "");
     }
 
-
     // ✅ Punch Out
     public String punchOut(String email) {
         Register user = registerRepository.findByEmail(email)
@@ -86,15 +85,29 @@ public class AttendanceService {
         Attendance attendance = attendanceRepository.findActiveByUser(user)
                 .orElseThrow(() -> new RuntimeException("No active punch-in found"));
 
-        attendance.setPunchOutTime(LocalDateTime.now());
+        LocalDateTime punchOutTime = LocalDateTime.now();
+        attendance.setPunchOutTime(punchOutTime);
         attendance.setActive(false);
-        attendance.setStatus(Status.PRESENT);
+
+        // ✅ Calculate worked hours
+        if (attendance.getPunchInTime() != null) {
+            long hoursWorked = Duration.between(attendance.getPunchInTime(), punchOutTime).toHours();
+
+            if (hoursWorked < 8) {
+                attendance.setStatus(Status.HALFDAY); // less than 8 hrs = half day
+            } else {
+                attendance.setStatus(Status.PRESENT);
+            }
+        }
+
         attendanceRepository.save(attendance);
 
-        return "Punch out recorded for " + user.getEmail();
+        return "Punch out recorded for " + user.getEmail() +
+                (attendance.getStatus() == Status.HALFDAY ? " (Half Day)" : " (Present)");
     }
 
-    // ✅ Scheduled task to mark absent if no punch-in by 11:00 AM
+
+    // ✅ Scheduled task to mark absent if no punch-in by 3:00 PM
     @Scheduled(cron = "0 0 15 * * *") // runs every day at 3:00 PM
     public void markAbsent() {
         List<Register> users = registerRepository.findAll();
