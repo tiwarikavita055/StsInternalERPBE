@@ -11,5 +11,6 @@ public class AttendanceSummaryDto {
     private String email;     // new field
     private long totalPresentDays;
     private long totalAbsentDays;
+    private long totalHalfDays;   // ✅ NEW FIELD
     private long totalHoursWorked;
 }

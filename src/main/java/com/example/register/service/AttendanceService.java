@@ -149,6 +149,9 @@ public class AttendanceService {
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
         long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
+        long totalHalfDays = records.stream()
+                .filter(r -> r.getStatus() == Status.HALFDAY)
+                .count();
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
@@ -161,6 +164,7 @@ public class AttendanceService {
                 user.getEmail(),
                 totalPresent,
                 totalAbsent,
+                totalHalfDays,   // ✅ include half days
                 totalHoursWorked
         );
     }
@@ -192,6 +196,9 @@ public class AttendanceService {
 
         long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
         long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
+        long totalHalfDays = records.stream()
+                .filter(r -> r.getStatus() == Status.HALFDAY)
+                .count();
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
@@ -203,6 +210,7 @@ public class AttendanceService {
                 user.getEmail(),
                 totalPresent,
                 totalAbsent,
+                totalHalfDays,   // ✅ include half days
                 totalHoursWorked
         );
     }
