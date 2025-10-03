@@ -147,16 +147,22 @@ public class AttendanceService {
 
         List<Attendance> records = filterByMonthYear(attendanceRepository.findByUser(user), month, year);
 
-        long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
+        long totalPresent = records.stream()
+                .filter(r -> r.getStatus() == Status.PRESENT)
+                .count();
+
+        long totalAbsent = records.stream()
+                .filter(r -> r.getStatus() == Status.ABSENT || r.isAbsent())
+                .count();
+
         long totalHalfDays = records.stream()
                 .filter(r -> r.getStatus() == Status.HALFDAY)
                 .count();
+
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
                 .sum();
-
 
         return new AttendanceSummaryDto(
                 user.getId(),
@@ -187,18 +193,24 @@ public class AttendanceService {
         )).toList();
     }
 
-    // ✅ Per-user summary (logged-in user)
     public AttendanceSummaryDto getMyAttendanceSummary(String email, Integer month, Integer year) {
         Register user = registerRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Attendance> records = filterByMonthYear(attendanceRepository.findByUser(user), month, year);
 
-        long totalPresent = records.stream().filter(r -> r.getPunchInTime() != null).count();
-        long totalAbsent = records.stream().filter(Attendance::isAbsent).count();
+        long totalPresent = records.stream()
+                .filter(r -> r.getStatus() == Status.PRESENT)
+                .count();
+
+        long totalAbsent = records.stream()
+                .filter(r -> r.getStatus() == Status.ABSENT || r.isAbsent())
+                .count();
+
         long totalHalfDays = records.stream()
                 .filter(r -> r.getStatus() == Status.HALFDAY)
                 .count();
+
         long totalHoursWorked = records.stream()
                 .filter(r -> r.getPunchInTime() != null && r.getPunchOutTime() != null)
                 .mapToLong(r -> Duration.between(r.getPunchInTime(), r.getPunchOutTime()).toHours())
